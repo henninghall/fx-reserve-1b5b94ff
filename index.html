@@ -88,6 +88,16 @@
   .analogy { display: flex; gap: 14px; align-items: flex-start; }
   .analogy .icon { font-size: 30px; line-height: 1; }
   .grid.two { grid-template-columns: 1fr 1fr; }
+  .report { border: 1px solid var(--line); border-radius: 12px; overflow: hidden; max-width: 560px; margin-top: 14px; }
+  .report header { padding: 10px 14px; font-weight: 600; font-size: 14px; background: var(--bg); display: flex; justify-content: space-between; color: var(--muted); }
+  .report .row.group > span:first-child, .report .row.sum > span:first-child { font-weight: 600; }
+  .report .row.sum { background: var(--bg); font-weight: 600; }
+  .report .row.sub > span:first-child { padding-left: 18px; color: var(--muted); }
+  .report .row.sub .num { color: var(--muted); font-weight: 500; }
+  .report .row.fx { background: var(--good-bg); }
+  .report .row.fx > span:first-child, .report .row.fx .num { color: var(--good); font-weight: 600; }
+  .report .row.absent { justify-content: center; color: var(--muted); font-size: 13px; font-style: italic; }
+  .report .rate { font-size: 12px; font-weight: 500; display: block; }
   @media (max-width: 640px) { .grid.two, .compare, .timeline { grid-template-columns: 1fr; } }
 </style>
 
@@ -100,6 +110,7 @@
   <nav class="pagetabs" role="tablist">
     <button role="tab" data-tab="reserve" aria-selected="true">The translation reserve</button>
     <button role="tab" data-tab="reports" aria-selected="false">FX in our reports</button>
+    <button role="tab" data-tab="screens" aria-selected="false">How the reports look</button>
   </nav>
 
   <div data-page="reserve">
@@ -244,6 +255,58 @@
       <div class="step">Drill-downs</div>
       <h2>Every translated figure shows amount × rate</h2>
       <p>Hovering an amount shows the native amount, the rate and its kind: <b>Rate</b> (that day), <b>Closing rate</b>, <b>Opening rate</b>, or <b>Historical rates</b> for an equity balance built from many rates.</p>
+    </section>
+  </div>
+
+  <div data-page="screens" hidden>
+    <section class="tldr">
+      <p>The German subsidiary from the first tab, at the end of <b>2025</b>, as it reads in our three reports.</p>
+      <p>The currency effect shows in exactly two rows: the <b>Translation reserve</b> on the balance sheet and <b>Exchange-rate differences in cash</b> in the cash flow.</p>
+    </section>
+
+    <section>
+      <div class="step">Balance sheet</div>
+      <h2>Everything balances because of the reserve</h2>
+      <div class="report">
+        <header><span>Balance sheet · 31 Dec 2025</span><span>SEK</span></header>
+        <div class="row group"><span>Cash and bank<span class="rate">€200 × 14 · closing rate</span></span><span class="num">2,800</span></div>
+        <div class="row sum"><span>Total assets</span><span class="num">2,800</span></div>
+        <div class="row group"><span>Equity</span><span class="num">2,150</span></div>
+        <div class="row sub fx"><span>Translation reserve<span class="rate">what's left: 250 from 2024 + 350 from 2025</span></span><span class="num">600</span></div>
+        <div class="row sub"><span>Retained earnings<span class="rate">2024's profit, €50 × 11 · historical rates</span></span><span class="num">550</span></div>
+        <div class="row sub"><span>Share capital<span class="rate">€100 × 10 · historical rates</span></span><span class="num">1,000</span></div>
+        <div class="row group"><span>Profit for the year<span class="rate">from the income statement</span></span><span class="num">650</span></div>
+        <div class="row sum"><span>Total equity and liabilities</span><span class="num">2,800</span></div>
+      </div>
+      <p class="muted" style="margin-top:12px">Click any figure in Bliss to see its amount × rate.</p>
+    </section>
+
+    <section>
+      <div class="step">Income statement</div>
+      <h2>Only what the company earned</h2>
+      <div class="report">
+        <header><span>Income statement · 2025</span><span>SEK</span></header>
+        <div class="row group"><span>Net sales<span class="rate">€80 × each day's rate</span></span><span class="num">1,040</span></div>
+        <div class="row group"><span>Other external expenses<span class="rate">€30 × each day's rate</span></span><span class="num">−390</span></div>
+        <div class="row sum"><span>Operating profit/loss</span><span class="num">650</span></div>
+        <div class="row sum"><span>Profit for the year</span><span class="num">650</span></div>
+        <div class="row absent">No translation difference row — under K3 it goes to the reserve</div>
+      </div>
+    </section>
+
+    <section>
+      <div class="step">Cash flow</div>
+      <h2>One row for what the rate did to cash</h2>
+      <div class="report">
+        <header><span>Cash flow statement · 2025</span><span>SEK</span></header>
+        <div class="row group"><span>Operating activities<span class="rate">€50 × each day's rate</span></span><span class="num">650</span></div>
+        <div class="row sum"><span>Net change in cash and cash equivalents</span><span class="num">650</span></div>
+        <div class="row group"><span>Cash and cash equivalents at end of period</span><span class="num">2,800</span></div>
+        <div class="row sub"><span>Cash and cash equivalents at start of period<span class="rate">€150 × 12 · opening rate</span></span><span class="num">1,800</span></div>
+        <div class="row sub"><span>Cash flow for the period</span><span class="num">650</span></div>
+        <div class="row sub fx"><span>Exchange-rate differences in cash<span class="rate">€150 × (14 − 12) + €50 × (14 − 13)</span></span><span class="num">350</span></div>
+      </div>
+      <p class="muted" style="margin-top:12px">All the company's assets are cash here, so this 350 matches the reserve's growth in 2025.</p>
     </section>
   </div>
 </main>
