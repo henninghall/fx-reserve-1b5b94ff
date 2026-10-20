@@ -1,0 +1,296 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="robots" content="noindex, nofollow" />
+<title>Currency differences in group reports</title>
+<style>
+  :root {
+    --ink: #1a1d23; --muted: #6b7280; --line: #e6e8ec; --bg: #f7f8fa; --card: #fff;
+    --good: #0f7b55; --good-bg: #e8f6f0; --bad: #b4530b; --bad-bg: #fdf1e6; --accent: #3557d4;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font: 16px/1.55 -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", sans-serif; color: var(--ink); background: var(--bg); }
+  main { max-width: 860px; margin: 0 auto; padding: 48px 20px 80px; }
+  h1 { font-size: 30px; line-height: 1.2; margin: 0 0 8px; letter-spacing: -0.02em; }
+  h2 { font-size: 20px; margin: 0 0 6px; letter-spacing: -0.01em; }
+  .lead { color: var(--muted); font-size: 18px; margin: 0 0 36px; }
+  section { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 26px 28px; margin-bottom: 18px; }
+  .step { font-size: 12px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); margin-bottom: 6px; }
+  p { margin: 8px 0; }
+  .muted { color: var(--muted); }
+  .tldr { background: var(--ink); color: #fff; border: none; }
+  .tldr p { font-size: 17px; margin: 6px 0; }
+  .tldr b { color: #ffd28a; }
+
+  .timeline { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 16px; }
+  .tl { background: var(--bg); border-radius: 10px; padding: 12px; font-size: 14px; }
+  .tl b { display: block; font-size: 15px; }
+  .rate { font-variant-numeric: tabular-nums; color: var(--accent); font-weight: 600; }
+
+  .tabs { display: inline-flex; background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: 3px; margin: 14px 0 18px; }
+  .tabs button { border: 0; background: none; padding: 7px 16px; border-radius: 7px; font: inherit; font-size: 14px; cursor: pointer; color: var(--muted); }
+  .tabs button[aria-selected="true"] { background: var(--card); color: var(--ink); box-shadow: 0 1px 3px rgba(0,0,0,.08); font-weight: 600; }
+
+  .compare { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .sheet { border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+  .sheet header { padding: 10px 14px; font-weight: 600; font-size: 14px; display: flex; justify-content: space-between; align-items: center; }
+  .sheet.today header { background: var(--bad-bg); color: var(--bad); }
+  .sheet.right header { background: var(--good-bg); color: var(--good); }
+  .row { display: flex; justify-content: space-between; padding: 9px 14px; border-top: 1px solid var(--line); font-size: 15px; }
+  .row .sv { color: var(--muted); font-size: 12px; display: block; }
+  .num { font-variant-numeric: tabular-nums; font-weight: 600; text-align: right; }
+  .row.total { background: var(--bg); font-weight: 600; }
+  .delta { display: block; font-size: 12px; font-weight: 600; color: var(--bad); }
+  .row.off { background: #fffaf3; }
+  .note { margin-top: 14px; padding: 12px 14px; border-radius: 10px; background: var(--bg); font-size: 15px; }
+
+  .is { max-width: 420px; }
+  .row.new { background: var(--good-bg); }
+  .pill { font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 99px; background: var(--good); color: #fff; margin-left: 6px; vertical-align: 2px; }
+
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; margin-top: 14px; }
+  .card { border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; font-size: 14.5px; }
+  .card h3 { margin: 0 0 4px; font-size: 15px; }
+  .card .who { color: var(--muted); font-size: 13px; margin-bottom: 6px; }
+  .card.rec { border: 2px solid var(--good); background: linear-gradient(var(--good-bg), #fff 60%); }
+  .tag { display: inline-block; font-size: 11px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--good); margin-bottom: 4px; }
+  .pros { margin: 6px 0 0; padding: 0; list-style: none; }
+  .pros li { padding-left: 20px; position: relative; margin: 3px 0; }
+  .pros li::before { position: absolute; left: 0; }
+  .pros .y::before { content: "✓"; color: var(--good); font-weight: 700; }
+  .pros .n::before { content: "✕"; color: var(--bad); font-weight: 700; }
+
+  ol.plan { margin: 12px 0 0; padding: 0; list-style: none; counter-reset: s; }
+  ol.plan li { counter-increment: s; position: relative; padding: 10px 0 10px 44px; border-top: 1px solid var(--line); }
+  ol.plan li:first-child { border-top: 0; }
+  ol.plan li::before { content: counter(s); position: absolute; left: 0; top: 10px; width: 28px; height: 28px; border-radius: 50%; background: var(--bg); border: 1px solid var(--line); display: grid; place-items: center; font-weight: 600; font-size: 14px; }
+  ol.plan li.now::before { background: var(--accent); color: #fff; border-color: var(--accent); }
+  ol.plan small { color: var(--muted); display: block; }
+
+  .pagetabs { display: flex; gap: 6px; margin: 0 0 22px; border-bottom: 1px solid var(--line); }
+  .pagetabs button { border: 0; background: none; font: inherit; font-size: 15px; padding: 10px 14px; cursor: pointer; color: var(--muted); border-bottom: 2px solid transparent; margin-bottom: -1px; }
+  .pagetabs button[aria-selected="true"] { color: var(--ink); font-weight: 600; border-bottom-color: var(--ink); }
+  [data-page][hidden] { display: none; }
+  .inv { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 14.5px; }
+  .inv th { text-align: left; font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); font-weight: 600; padding: 8px 10px; border-bottom: 1px solid var(--line); }
+  .inv td { padding: 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  .inv tr:last-child td { border-bottom: 0; }
+  .inv .row-name { font-weight: 600; white-space: nowrap; }
+  .inv .col { color: var(--muted); font-size: 13px; white-space: nowrap; }
+  .badge { display: inline-block; font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 99px; margin-left: 6px; vertical-align: 1px; }
+  .badge.new { background: var(--good-bg); color: var(--good); }
+  .badge.none { background: var(--bg); color: var(--muted); }
+  .rates { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 10px; margin-top: 12px; }
+  .rates div { background: var(--bg); border-radius: 10px; padding: 12px; font-size: 14px; }
+  .rates b { display: block; margin-bottom: 2px; }
+  .analogy { display: flex; gap: 14px; align-items: flex-start; }
+  .analogy .icon { font-size: 30px; line-height: 1; }
+  .grid.two { grid-template-columns: 1fr 1fr; }
+  @media (max-width: 640px) { .grid.two, .compare, .timeline { grid-template-columns: 1fr; } }
+</style>
+
+</head>
+<body>
+<main>
+  <h1>Currency differences in group reports</h1>
+  <p class="lead">Why a group with a foreign subsidiary has a translation reserve, how Bliss carries it, and where currency effects show up in each report.</p>
+
+  <nav class="pagetabs" role="tablist">
+    <button role="tab" data-tab="reserve" aria-selected="true">The translation reserve</button>
+    <button role="tab" data-tab="reports" aria-selected="false">FX in our reports</button>
+  </nav>
+
+  <div data-page="reserve">
+  <section class="tldr">
+    <p>When the euro moves, the group's euro company is worth more or fewer kronor. That gain or loss is the <b>translation reserve</b>.</p>
+    <p>It <b>adds up year after year</b> in equity, while share capital stays at what was put in and each year's profit stays at the rates it was earned at.</p>
+  </section>
+
+  <section>
+    <div class="step">1 · The idea</div>
+    <h2>It's like holding a euro savings account</h2>
+    <div class="analogy">
+      <div class="icon">💶</div>
+      <div>
+        <p>You put <b>1,000 kr</b> into a euro account when €1 = 10 kr. Later €1 = 14 kr, and the account is worth 1,400 kr.</p>
+        <p>You never put in 1,400 kr. You put in 1,000 kr and gained <b>400 kr on the currency</b>. A good report keeps those two apart, forever: <i>what you put in</i> and <i>what the currency did</i>.</p>
+        <p class="muted">K3 and IFRS both ask for exactly that: the group's currency gain is kept separate in equity, it builds up over the years, and it's only booked as profit when the company is sold.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="step">2 · The example</div>
+    <h2>A Swedish group with one German subsidiary</h2>
+    <p class="muted">The group reports in SEK. The subsidiary keeps its books in EUR.</p>
+    <div class="timeline">
+      <div class="tl"><b>Jan 2024</b>Founded with €100 share capital<br>€1 = <span class="rate">10 kr</span></div>
+      <div class="tl"><b>2024</b>Profit €50 · avg <span class="rate">11</span><br>year-end <span class="rate">12</span></div>
+      <div class="tl"><b>2025</b>Profit €50 · avg <span class="rate">13</span><br>year-end <span class="rate">14</span></div>
+      <div class="tl"><b>2026</b>Profit €50 · avg <span class="rate">12</span><br>year-end <span class="rate">11</span></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="step">3 · Balance sheet</div>
+    <h2>The subsidiary's equity, in kronor</h2>
+    <div class="tabs" role="tablist" id="years"></div>
+    <div class="sheet right" style="max-width:520px"><header>Balance sheet, end of year</header><div id="right"></div></div>
+    <div class="note" id="explain"></div>
+  </section>
+
+  <section>
+    <div class="step">4 · Income statement</div>
+    <h2>Under K3 it never touches the income statement</h2>
+    <p>K3 30.12 sends the translation difference <b>straight to equity</b>. The income statement shows the year's profit only; the difference shows as the <b>Translation reserve</b> row on the balance sheet.</p>
+    <p class="muted">IFRS groups also show it below the profit as "Other comprehensive income". For reference, the year's figure would be:</p>
+    <div class="sheet right is" id="is"></div>
+  </section>
+
+  <section>
+    <div class="step">5 · How Bliss carries it</div>
+    <h2>Each subsidiary's equity, walked forward year by year</h2>
+    <ol class="plan">
+      <li class="now"><b>A starting point</b><small>The acquisition date, or the first year of books Bliss holds. Equity starts at that day's rate.</small></li>
+      <li class="now"><b>Contributions keep their rate</b><small>A share issue stays at the rate on the day it was made, in every later report.</small></li>
+      <li class="now"><b>Profit keeps the rates it was earned at</b><small>When a year closes, its result moves into retained earnings at those rates.</small></li>
+      <li class="now"><b>The rest is the translation reserve</b><small>Assets and liabilities sit at the closing rate; what that adds on top of equity is the reserve, and it accumulates.</small></li>
+      <li class="now"><b>The same answer for any period</b><small>The balance sheet on a date is the same whichever month the report starts in.</small></li>
+    </ol>
+    <p class="muted" style="margin-top:12px">Every equity figure opens in the drill-down as native amount × rate, labelled <b>Historical rates</b>. The income statement and cash flow don't depend on this, so they read only their own period.</p>
+  </section>
+
+  <section>
+    <div class="step">6 · How others do it</div>
+    <h2>Everyone keeps the history, one way or another</h2>
+    <div class="grid">
+      <div class="card"><h3>Remember every rate</h3><div class="who">NetSuite</div>Tags equity accounts "historical" and recomputes from history at report time.</div>
+      <div class="card"><h3>Save each year's result</h3><div class="who">SAP · Oracle · Sage Intacct</div>Stores translated year-end balances and carries them forward.</div>
+      <div class="card"><h3>Ask the user</h3><div class="who">Spiris (formerly Visma Koncern) · OneStream</div>The user enters historical rates or amounts by hand.</div>
+      <div class="card"><h3>History or a starting number</h3><div class="who">Fortnox Koncern</div>Needs all history since the purchase, or a manual opening figure.</div>
+      <div class="card"><h3>Simple tools</h3><div class="who">Fathom · Spotlight</div>Use today's rate for everything. Easy, but no proper reserve.</div>
+    </div>
+    <p class="muted" style="margin-top:12px">Bliss recomputes from the books it holds, like NetSuite.</p>
+  </section>
+
+  <section>
+    <div class="step">7 · Limits</div>
+    <h2>What isn't covered yet</h2>
+    <ol class="plan">
+      <li><b>History older than the synced books</b><small>The reserve starts at zero on the first year Bliss holds. A starting figure from the last audited report would close that gap.</small></li>
+      <li><b>Statement of changes in equity</b><small>K3 wants the year's translation difference as its own row there.</small></li>
+      <li><b>Selling a subsidiary</b><small>The reserve isn't yet moved into profit on disposal.</small></li>
+      <li><b>Part-owned subsidiaries</b><small>Minority owners' share of the reserve isn't split out.</small></li>
+    </ol>
+  </section>
+  </div>
+
+  <div data-page="reports" hidden>
+    <section class="tldr">
+      <p>Every foreign entity is translated by one rule set: <b>flows at the day's rate</b>, <b>assets and liabilities at the closing rate</b>, <b>equity at historical rates</b>.</p>
+      <p>The gap those rates leave is the <b>Translation reserve</b> — on the balance sheet only, as K3 requires.</p>
+    </section>
+
+    <section>
+      <div class="step">The rates</div>
+      <h2>Which rate each figure uses</h2>
+      <div class="rates">
+        <div><b>Day's rate</b>Every income and expense, every cash flow, every equity movement (share issue, dividend).</div>
+        <div><b>Closing rate</b>Assets and liabilities, including goodwill and surplus values from an acquisition.</div>
+        <div><b>Historical rates</b>Equity balances, carried from the acquisition date or the first year Bliss holds.</div>
+        <div><b>Opening rate</b>Only opening cash in the cash flow, to measure the rate effect on cash.</div>
+      </div>
+    </section>
+
+    <section>
+      <div class="step">Income statement</div>
+      <h2>Booked FX only — never the translation difference</h2>
+      <table class="inv">
+        <tr><th>Row</th><th>Column</th><th>What it is</th></tr>
+        <tr><td class="row-name">Wherever the account is mapped</td><td class="col">Each entity</td><td>Exchange gains and losses the subsidiary booked itself (e.g. on a supplier invoice in another currency). Usually other operating income/expenses or financial items, by the account's group account.</td></tr>
+        <tr><td class="row-name">Omräkningsdifferens på nettoinvestering</td><td class="col">Adjustments</td><td>Takes the FX on a designated intercompany loan (a net investment) back out of profit; it goes to the reserve instead (K3 30.11).</td></tr>
+        <tr><td class="row-name">Koncerninterna differenser</td><td class="col">Eliminations</td><td>What intercompany pairs don't agree on, FX included, as one row.</td></tr>
+        <tr><td class="row-name">Translation difference</td><td class="col">—</td><td><span class="badge none">not shown</span> K3 sends it straight to equity.</td></tr>
+      </table>
+    </section>
+
+    <section>
+      <div class="step">Balance sheet</div>
+      <h2>Where the translation difference lives</h2>
+      <table class="inv">
+        <tr><th>Row</th><th>Column</th><th>What it is</th></tr>
+        <tr><td class="row-name">Share capital, retained earnings…</td><td class="col">Each entity</td><td>At historical rates: what was put in, and each year's profit at the rates it was earned.</td></tr>
+        <tr><td class="row-name">Translation reserve</td><td class="col">Each entity</td><td>Cumulative translation difference — everything the closing rate adds on top of historical equity. The drill-down shows it per account.</td></tr>
+        <tr><td class="row-name">Valutakursdifferens på koncerninterna mellanhavanden</td><td class="col">Eliminations</td><td>The FX part of intercompany balances that don't cancel because each side carries them at different rates.</td></tr>
+        <tr><td class="row-name">Translation reserve</td><td class="col">Acquisitions</td><td>Goodwill and surplus values restated at the closing rate; the difference lands in the reserve.</td></tr>
+        <tr><td class="row-name">Translation reserve</td><td class="col">Adjustments</td><td>Cumulative FX on designated net-investment loans, moved here from retained earnings.</td></tr>
+      </table>
+    </section>
+
+    <section>
+      <div class="step">Cash flow</div>
+      <h2>Flows at the day's rate, one row for the rate effect</h2>
+      <table class="inv">
+        <tr><th>Row</th><th>Column</th><th>What it is</th></tr>
+        <tr><td class="row-name">Every flow row</td><td class="col">Each entity</td><td>Each posting at its own day's rate — never a closing-rate difference, which would mix translation into cash flows.</td></tr>
+        <tr><td class="row-name">Exchange-rate differences in cash</td><td class="col">Each entity</td><td>Opening cash × (closing − opening rate) + cash postings × (closing − their own rate). Ties the flows to the closing cash (K3 7.13).</td></tr>
+        <tr><td class="row-name">Translation reserve</td><td class="col">—</td><td><span class="badge none">not shown</span> No cash moves.</td></tr>
+      </table>
+    </section>
+
+    <section>
+      <div class="step">Drill-downs</div>
+      <h2>Every translated figure shows amount × rate</h2>
+      <p>Hovering an amount shows the native amount, the rate and its kind: <b>Rate</b> (that day), <b>Closing rate</b>, <b>Opening rate</b>, or <b>Historical rates</b> for an equity balance built from many rates.</p>
+    </section>
+  </div>
+</main>
+
+<script>
+  const data = {
+    2024: { netAssets: "€150 × 12 = 1,800", share: 1000, retained: 0, result: 550, reserve: 250, oci: 250,
+      text: "First year: the euro rose from 10 to 12, so the subsidiary's net assets are worth 250 kr more than what was put in plus the year's profit. That 250 is the reserve." },
+    2025: { netAssets: "€200 × 14 = 2,800", share: 1000, retained: 550, result: 650, reserve: 600, oci: 350,
+      text: "Share capital is still 1,000 and 2024's profit stays at 550. The euro rose again, adding 350 to the reserve: 250 + 350 = 600." },
+    2026: { netAssets: "€250 × 11 = 2,750", share: 1000, retained: 1200, result: 600, reserve: -50, oci: -650,
+      text: "The euro fell to 11, taking 650 off the reserve: 600 − 650 = −50. Over three years the currency has almost come back to even." },
+  };
+  const rows = [
+    ["share", "Share capital", "Aktiekapital"],
+    ["retained", "Earlier years' profits", "Balanserat resultat"],
+    ["result", "This year's profit", "Årets resultat"],
+    ["reserve", "Translation reserve", "Omräkningsreserv"],
+  ];
+  const fmt = (n) => (n < 0 ? "−" : "") + Math.abs(n).toLocaleString("en-US");
+  const years = document.getElementById("years");
+  function render(year) {
+    const d = data[year];
+    const total = d.share + d.retained + d.result + d.reserve;
+    document.getElementById("right").innerHTML = rows.map(([key, label, sv]) =>
+      `<div class="row"><span>${label}<span class="sv">${sv}</span></span><span class="num">${fmt(d[key])}</span></div>`).join("") +
+      `<div class="row total"><span>Total equity<span class="sv">${d.netAssets}</span></span><span class="num">${fmt(total)}</span></div>`;
+    document.getElementById("explain").textContent = d.text;
+    document.getElementById("is").innerHTML = `
+      <div class="row"><span>Profit for the year<span class="sv">Årets resultat</span></span><span class="num">${fmt(d.result)}</span></div>
+      <div class="row new"><span>Translation differences<span class="pill">IFRS only</span><span class="sv">Omräkningsdifferenser</span></span><span class="num">${fmt(d.oci)}</span></div>
+      <div class="row total new"><span>Total comprehensive income<span class="pill">IFRS only</span><span class="sv">Årets totalresultat</span></span><span class="num">${fmt(d.result + d.oci)}</span></div>`;
+    [...years.children].forEach((b) => b.setAttribute("aria-selected", b.dataset.y === String(year)));
+  }
+  Object.keys(data).forEach((y) => {
+    const b = document.createElement("button");
+    b.textContent = y; b.dataset.y = y; b.setAttribute("role", "tab");
+    b.onclick = () => render(y);
+    years.appendChild(b);
+  });
+  render(2025);
+  document.querySelectorAll(".pagetabs button").forEach((tab) => {
+    tab.onclick = () => {
+      document.querySelectorAll(".pagetabs button").forEach((other) => other.setAttribute("aria-selected", other === tab));
+      document.querySelectorAll("[data-page]").forEach((page) => { page.hidden = page.dataset.page !== tab.dataset.tab; });
+    };
+  });
+</script>
+</body>
+</html>
